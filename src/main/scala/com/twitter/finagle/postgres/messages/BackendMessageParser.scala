@@ -213,28 +213,29 @@ class BackendMessageParser {
     Some(new CommandComplete(parseTag(tag)))
   }
 
-  def parseTag(tag: String) : CommandCompleteStatus = {
-    if (tag == "CREATE TABLE") {
-      CreateTable
-    } else if (tag == "DROP TABLE") {
-      DropTable
-    } else if (tag == "DISCARD ALL") {
-      DiscardAll
-    } else {
-      val parts = tag.split(" ")
+  private val tagWithParams =
+    """(SELECT|INSERT|UPDATE|DELETE) (\d+)(?: (\d+))?""".r
 
-      parts(0) match {
-        case "SELECT" => Select(parts(1).toInt)
-        case "INSERT" => Insert(parts(2).toInt)
-        case "DELETE" => Delete(parts(1).toInt)
-        case "UPDATE" => Update(parts(1).toInt)
-	case "BEGIN"  => Begin
-	case "SAVEPOINT" => Savepoint
-	case "ROLLBACK"  => RollBack
-	case "COMMIT" => Commit
+  def parseTag(tag: String) : CommandCompleteStatus = tag match {
+    case "CREATE TABLE" => CreateTable
+    case "DROP TABLE"   => DropTable
+    case "DISCARD ALL"  => DiscardAll
+    case "CREATE TYPE"  => CreateType
+    case "BEGIN"        => Begin
+    case "SAVEPOINT"    => Savepoint
+    case "ROLLBACK"     => RollBack
+    case "COMMIT"       => Commit
+    case "DO"           => Do
+
+    case tagWithParams(tagName, parts @ _*)  => tagName match {
+        case "SELECT"         => Select(parts(1).toInt)
+        case "INSERT"
+          if parts.size == 2  => Insert(parts(2).toInt)
+        case "DELETE"         => Delete(parts(1).toInt)
+        case "UPDATE"         => Update(parts(1).toInt)
+
         case _ => throw new IllegalStateException("Unknown command complete response tag " + tag)
       }
-    }
   }
 
   def parseS(packet: Packet): Option[BackendMessage] = {

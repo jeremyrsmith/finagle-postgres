@@ -49,9 +49,13 @@ sealed trait CommandCompleteStatus
 
 case object CreateTable extends CommandCompleteStatus
 
+case object CreateType extends CommandCompleteStatus
+
 case object DropTable extends CommandCompleteStatus
 
 case object DiscardAll extends CommandCompleteStatus
+
+case object Do extends CommandCompleteStatus
 
 case class Insert(count : Int) extends CommandCompleteStatus
 
